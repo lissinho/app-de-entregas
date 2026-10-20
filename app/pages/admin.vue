@@ -20,10 +20,9 @@ const links = [
       <div class="border-b border-border bg-card">
         <div class="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
           <div class="flex items-center gap-4">
-            <AppLogo class="w-auto h-6" />
             <span
               v-if="coletivo"
-              class="font-semibold"
+              class="font-black bg-primary px-2 rounded-2xl"
             >{{ coletivo.nome }}</span>
           </div>
 

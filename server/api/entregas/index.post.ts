@@ -3,7 +3,7 @@ import { z } from 'zod'
 const schemaCriacao = z.object({
   nomeCliente: z.string().min(2).max(120),
   telefoneCliente: z.string().optional(),
-  enderecoRetirada: z.string().min(3).optional(),
+  enderecoRetirada: z.string().min(3).optional().or(z.literal('')),
   enderecoEntrega: z.string().min(3),
   categoriaVolume: z.string().min(1),
   entregadorId: z.number().int().optional()

@@ -18,7 +18,7 @@ export default defineEventHandler(async (event) => {
     args: []
   })
   if (Number(primeiraLinha(existente.linhas).count) > 0) {
-    throw createError({ statusCode: 409, statusMessage: 'Configuração inicial já realizada' })
+    throw createError({ statusCode: 409, statusMessage: 'Configuração inicial realizada' })
   }
 
   const body = await readValidatedBody(event, schemaConfiguracao.parse)

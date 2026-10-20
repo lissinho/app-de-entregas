@@ -26,7 +26,7 @@ useHead({
   titleTemplate: '%s · Aplicativo de Entregas'
 })
 
-const { usuario, buscarMe, logout } = useAutenticacao()
+const { buscarMe } = useAutenticacao()
 const { buscarColetivo } = useColetivo()
 const appConfig = useAppConfig()
 
@@ -45,49 +45,6 @@ onMounted(async () => {
 
 <template>
   <UApp>
-    <UHeader>
-      <template #left>
-        <NuxtLink
-          to="/"
-          class="focus-visible:outline-3 outline-primary/25 rounded-md p-1 -ms-1"
-        >
-          <AppLogo class="w-auto h-6 shrink-0" />
-        </NuxtLink>
-      </template>
-
-      <template #right>
-        <div class="flex items-center gap-2">
-          <UColorModeButton />
-
-          <ClientOnly>
-            <UDropdownMenu
-              v-if="usuario"
-              :items="[
-                { label: usuario.nome, type: 'label' },
-                { label: 'Painel', to: usuario.perfil === 'admin' ? '/admin' : '/entregador', icon: 'lucide:layout-dashboard' },
-                { label: 'Sair', icon: 'lucide:log-out', onSelect: logout }
-              ]"
-            >
-              <UButton
-                variant="ghost"
-                color="neutral"
-                icon="lucide:user"
-              />
-            </UDropdownMenu>
-            <UButton
-              v-else
-              to="/login"
-              variant="ghost"
-              color="neutral"
-              icon="lucide:log-in"
-            >
-              Entrar
-            </UButton>
-          </ClientOnly>
-        </div>
-      </template>
-    </UHeader>
-
     <UMain>
       <NuxtPage />
     </UMain>
