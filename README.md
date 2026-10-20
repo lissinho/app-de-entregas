@@ -1,64 +1,106 @@
-# Nuxt Starter Template
+# App de Entregas — Coletivo de Entregadores
 
-[![Nuxt UI](https://img.shields.io/badge/Made%20with-Nuxt%20UI-00DC82?logo=nuxt&labelColor=020420)](https://ui.nuxt.com)
+Aplicativo full-stack para controle simples de entregas de bicicleta/moto, voltado para coletivos de entregadores. Construído com [Nuxt 4](https://nuxt.com) + [Nuxt UI](https://ui.nuxt.com).
 
-Use this template to get started with [Nuxt UI](https://ui.nuxt.com) quickly.
+## Stack
 
-- [Live demo](https://starter-template.nuxt.dev/)
-- [Documentation](https://ui.nuxt.com/docs/getting-started/installation/nuxt)
+- **Framework:** Nuxt 4.6 + Vue 3 + TypeScript
+- **UI:** Nuxt UI 4.12 (componentes prontos, tema personalizável)
+- **Banco de dados:** SQLite nativo do Node.js (`node:sqlite`) — leve, sem dependências nativas extras
+- **Autenticação:** sessões criptografadas em cookie + senhas com `bcryptjs`
+- **Geocodificação:** Nominatim (OpenStreetMap) + distância por fórmula de Haversine
 
-<a href="https://starter-template.nuxt.dev/" target="_blank">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://ui.nuxt.com/assets/templates/nuxt/starter-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="https://ui.nuxt.com/assets/templates/nuxt/starter-light.png">
-    <img alt="Nuxt Starter Template" src="https://ui.nuxt.com/assets/templates/nuxt/starter-light.png" width="830" height="466">
-  </picture>
-</a>
+## Funcionalidades
 
-> The starter template for Vue is on https://github.com/nuxt-ui-templates/starter-vue.
+- Primeira execução configura o coletivo, escolhe cores e cria o usuário administrador.
+- Dois perfis: **admin** (gerencia entregadores, configurações e entregas) e **entregador** (aceita/executa entregas).
+- Cores do coletivo definem o tema da aplicação em tempo real.
+- Cálculo automático do valor da entrega por distância e categoria de volume.
+- Taxa da plataforma (coletivo) adicionada ao valor cobrado do cliente.
+- Controle de raio de entrega a partir do endereço-base do coletivo.
+- Fluxo de status: pendente → atribuída → em andamento → entregue.
+- Visão de ganhos para o entregador.
 
-## Quick Start
+## Regras de negócio
 
-```bash [Terminal]
-npm create nuxt@latest -- -t ui
+### Preço da entrega
+
+```
+preço = (preço base + distância km × preço por km) × fator de volume
+valor cliente = preço + taxa da plataforma
 ```
 
-## Deploy your own
+- **Preço base:** valor fixo configurado pelo admin.
+- **Preço por km:** multiplicador configurado pelo admin.
+- **Categorias de volume:** cada categoria tem um fator que aumenta/diminui o preço (ex.: pequeno = 1, médio = 1.5, grande = 2).
+- **Taxa da plataforma:** pode ser percentual sobre o preço ou valor fixo, configurável pelo admin.
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-name=starter&repository-url=https%3A%2F%2Fgithub.com%2Fnuxt-ui-templates%2Fstarter&demo-image=https%3A%2F%2Fui.nuxt.com%2Fassets%2Ftemplates%2Fnuxt%2Fstarter-dark.png&demo-url=https%3A%2F%2Fstarter-template.nuxt.dev%2F&demo-title=Nuxt%20Starter%20Template&demo-description=A%20minimal%20template%20to%20get%20started%20with%20Nuxt%20UI.)
+### Raio de entrega
 
-## Setup
+O endereço de destino é geocodificado e só é aceito se estiver dentro do raio máximo configurado a partir do endereço-base do coletivo.
 
-Make sure to install the dependencies:
+## Variáveis de ambiente
+
+Crie um arquivo `.env` na raiz (opcional em desenvolvimento):
+
+```env
+# Banco de dados (caminho local; o prefixo file: é opcional)
+NUXT_DATABASE_URL=file:server/database.sqlite
+
+# Segredo da sessão (mínimo 32 caracteres)
+NUXT_SESSION_PASSWORD=uma-senha-forte-e-longa-de-pelo-menos-32-caracteres
+```
+
+> Em desenvolvimento, o Nuxt usa uma senha padrão de sessão se `NUXT_SESSION_PASSWORD` não for definida. **Nunca use o padrão em produção.**
+
+## Primeiros passos
+
+Instale as dependências:
 
 ```bash
 pnpm install
 ```
 
-## Development Server
-
-Start the development server on `http://localhost:3000`:
+Inicie o servidor de desenvolvimento:
 
 ```bash
 pnpm dev
 ```
 
-## Production
+Acesse `http://localhost:3000`. Na primeira vez, o sistema pede:
 
-Build the application for production:
+1. Nome do coletivo
+2. Cores do tema (primária e neutra)
+3. Dados do administrador (nome, e-mail e senha)
+
+Após o setup, faça login com o admin para cadastrar entregadores e configurar preços.
+
+## Scripts úteis
 
 ```bash
-pnpm build
+pnpm dev      # servidor de desenvolvimento
+pnpm build    # build para produção
+pnpm preview  # preview do build de produção
+pnpm lint     # lint com ESLint
+pnpm typecheck # checagem de tipos TypeScript
 ```
 
-Locally preview production build:
+## Estrutura de pastas relevante
 
-```bash
-pnpm preview
-```
+- `app/pages/` — páginas (setup, login, admin, entregador)
+- `app/composables/` — `useAuth.ts`, `useCollective.ts`
+- `app/middleware/` — controle de acesso e setup
+- `app/plugins/theme.client.ts` — aplica as cores do coletivo no cliente
+- `server/utils/db.ts` — conexão libsql, migrations e mapeadores
+- `server/utils/auth.ts` — sessões e guards de perfil
+- `server/utils/pricing.ts` — cálculo de preço e taxa
+- `server/utils/geocode.ts` — geocodificação e distância
+- `server/api/` — endpoints da API
 
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+## Produção
 
-## Renovate integration
+1. Defina `NUXT_DATABASE_URL` para o caminho do SQLite (ex.: `file:server/database.sqlite`).
+2. Defina `NUXT_SESSION_PASSWORD` com pelo menos 32 caracteres.
+3. Execute `pnpm build` e inicie o processo com `node .output/server/index.mjs`.
 
-Install [Renovate GitHub app](https://github.com/apps/renovate/installations/select_target) on your repository and you are good to go.
+Consulte a [documentação de deploy do Nuxt](https://nuxt.com/docs/getting-started/deployment) para mais detalhes.
