@@ -17,6 +17,7 @@ const state = reactive({
 
 const error = ref('')
 const loading = ref(false)
+const statusConfiguracao = useState<{ inicializado: boolean, coletivo: Coletivo | null }>('status-configuracao')
 
 async function onSubmit() {
   error.value = ''
@@ -28,7 +29,7 @@ async function onSubmit() {
 
   loading.value = true
   try {
-    await $fetch('/api/configuracao-inicial', {
+    const resultado = await $fetch<{ coletivo: Coletivo, usuario: Usuario }>('/api/configuracao-inicial', {
       method: 'POST',
       body: {
         nomeColetivo: state.nomeColetivo,
@@ -40,9 +41,11 @@ async function onSubmit() {
       }
     })
 
+    statusConfiguracao.value = { inicializado: true, coletivo: resultado.coletivo }
+
     const { buscarMe } = useAutenticacao()
     await buscarMe()
-    await navigateTo('/admin')
+    return navigateTo('/admin')
   } catch (err: unknown) {
     error.value = getApiErrorMessage(err) || 'Erro ao criar coletivo'
   } finally {
