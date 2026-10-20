@@ -91,77 +91,79 @@ async function alternarAtivo(entregador: Entregador) {
     />
 
     <UModal v-model:open="showCreateModal">
-      <UCard>
-        <template #header>
-          <h2 class="font-semibold">
-            Novo entregador
-          </h2>
-        </template>
+      <template #content>
+        <UCard>
+          <template #header>
+            <h2 class="font-semibold">
+              Novo entregador
+            </h2>
+          </template>
 
-        <form
-          class="space-y-4"
-          @submit.prevent="criarEntregador"
-        >
-          <UFormField
-            label="Nome"
-            required
+          <form
+            class="space-y-4"
+            @submit.prevent="criarEntregador"
           >
-            <UInput
-              v-model="createState.nome"
+            <UFormField
+              label="Nome"
               required
-            />
-          </UFormField>
-
-          <UFormField
-            label="E-mail"
-            required
-          >
-            <UInput
-              v-model="createState.email"
-              type="email"
-              required
-            />
-          </UFormField>
-
-          <UFormField
-            label="Senha"
-            required
-          >
-            <UInput
-              v-model="createState.senha"
-              type="password"
-              required
-            />
-          </UFormField>
-
-          <UFormField label="Telefone">
-            <UInput v-model="createState.telefone" />
-          </UFormField>
-
-          <UFormField label="Veículo">
-            <UInput
-              v-model="createState.tipoVeiculo"
-              placeholder="Ex: bike, moto"
-            />
-          </UFormField>
-
-          <div class="flex justify-end gap-2">
-            <UButton
-              variant="ghost"
-              @click="showCreateModal = false"
             >
-              Cancelar
-            </UButton>
-            <UButton
-              type="submit"
-              color="primary"
-              :loading="creating"
+              <UInput
+                v-model="createState.nome"
+                required
+              />
+            </UFormField>
+
+            <UFormField
+              label="E-mail"
+              required
             >
-              Criar
-            </UButton>
-          </div>
-        </form>
-      </UCard>
+              <UInput
+                v-model="createState.email"
+                type="email"
+                required
+              />
+            </UFormField>
+
+            <UFormField
+              label="Senha"
+              required
+            >
+              <UInput
+                v-model="createState.senha"
+                type="password"
+                required
+              />
+            </UFormField>
+
+            <UFormField label="Telefone">
+              <UInput v-model="createState.telefone" />
+            </UFormField>
+
+            <UFormField label="Veículo">
+              <UInput
+                v-model="createState.tipoVeiculo"
+                placeholder="Ex: bike, moto"
+              />
+            </UFormField>
+
+            <div class="flex justify-end gap-2">
+              <UButton
+                variant="ghost"
+                @click="showCreateModal = false"
+              >
+                Cancelar
+              </UButton>
+              <UButton
+                type="submit"
+                color="primary"
+                :loading="creating"
+              >
+                Criar
+              </UButton>
+            </div>
+          </form>
+        </UCard>
+      </template>
     </UModal>
   </div>
 </template>
