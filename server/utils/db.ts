@@ -1,33 +1,33 @@
 import { DatabaseSync } from 'node:sqlite'
-import type { Collective, Deliverer, Delivery, User, VolumeCategory, DeliveryStatus, PlatformFeeType, UserRole } from '~/types'
+import type { Coletivo, Entregador, Entrega, Usuario, CategoriaVolume, StatusEntrega, TipoTaxaPlataforma, PerfilUsuario } from '~/types'
 
-export type DbRow = Record<string, unknown>
+export type LinhaDb = Record<string, unknown>
 
-export function firstRow(rows: DbRow[]): DbRow {
-  const row = rows[0]
-  if (!row) throw new Error('Expected at least one row')
-  return row
+export function primeiraLinha(linhas: LinhaDb[]): LinhaDb {
+  const linha = linhas[0]
+  if (!linha) throw new Error('Esperada pelo menos uma linha')
+  return linha
 }
 
-let cachedDb: (DatabaseSync & { execute: typeof executeQuery }) | null = null
+let bancoEmCache: (DatabaseSync & { executar: typeof executarConsulta }) | null = null
 
-function executeQuery(
+function executarConsulta(
   this: DatabaseSync,
-  input: string | { sql: string, args?: unknown[] }
-): { rows: DbRow[] } {
-  if (typeof input === 'string') {
-    this.exec(input)
-    return { rows: [] }
+  entrada: string | { sql: string, args?: unknown[] }
+): { linhas: LinhaDb[] } {
+  if (typeof entrada === 'string') {
+    this.exec(entrada)
+    return { linhas: [] }
   }
 
-  const { sql, args = [] } = input
+  const { sql, args = [] } = entrada
   const statement = this.prepare(sql)
-  const rows = statement.all(...(args as import('node:sqlite').SQLInputValue[])) as DbRow[]
-  return { rows }
+  const linhas = statement.all(...(args as import('node:sqlite').SQLInputValue[])) as LinhaDb[]
+  return { linhas }
 }
 
-export function getDbClient(): DatabaseSync & { execute: typeof executeQuery } {
-  if (cachedDb) return cachedDb
+export function obterClienteDb(): DatabaseSync & { executar: typeof executarConsulta } {
+  if (bancoEmCache) return bancoEmCache
 
   const config = useRuntimeConfig()
   let url = config.database.url || 'file:server/database.sqlite'
@@ -35,189 +35,189 @@ export function getDbClient(): DatabaseSync & { execute: typeof executeQuery } {
     url = url.slice(5)
   }
 
-  const db = new DatabaseSync(url) as DatabaseSync & { execute: typeof executeQuery }
-  db.execute = executeQuery.bind(db)
-  cachedDb = db
-  return cachedDb
+  const db = new DatabaseSync(url) as DatabaseSync & { executar: typeof executarConsulta }
+  db.executar = executarConsulta.bind(db)
+  bancoEmCache = db
+  return bancoEmCache
 }
 
-export async function execute(input: string | { sql: string, args?: unknown[] }): Promise<{ rows: DbRow[] }> {
-  const db = getDbClient()
-  return executeQuery.call(db, input)
+export async function executar(entrada: string | { sql: string, args?: unknown[] }): Promise<{ linhas: LinhaDb[] }> {
+  const db = obterClienteDb()
+  return executarConsulta.call(db, entrada)
 }
 
-export const migrations = `
-CREATE TABLE IF NOT EXISTS collectives (
+export const migracoes = `
+CREATE TABLE IF NOT EXISTS coletivos (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL,
+  nome TEXT NOT NULL,
   slug TEXT UNIQUE,
-  primary_color TEXT NOT NULL DEFAULT 'orange',
-  neutral_color TEXT NOT NULL DEFAULT 'neutral',
-  base_address TEXT,
-  base_lat REAL,
-  base_lng REAL,
-  delivery_radius_km REAL NOT NULL DEFAULT 10,
-  base_price REAL NOT NULL DEFAULT 0,
-  price_per_km REAL NOT NULL DEFAULT 0,
-  platform_fee_type TEXT CHECK(platform_fee_type IN ('fixed','percent')) DEFAULT 'percent',
-  platform_fee_value REAL NOT NULL DEFAULT 0,
-  created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  cor_primaria TEXT NOT NULL DEFAULT 'orange',
+  cor_neutra TEXT NOT NULL DEFAULT 'neutral',
+  endereco_base TEXT,
+  latitude_base REAL,
+  longitude_base REAL,
+  raio_entrega_km REAL NOT NULL DEFAULT 10,
+  preco_base REAL NOT NULL DEFAULT 0,
+  preco_por_km REAL NOT NULL DEFAULT 0,
+  tipo_taxa_plataforma TEXT CHECK(tipo_taxa_plataforma IN ('fixo','percentual')) DEFAULT 'percentual',
+  valor_taxa_plataforma REAL NOT NULL DEFAULT 0,
+  criado_em TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE IF NOT EXISTS usuarios (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   email TEXT UNIQUE NOT NULL,
-  name TEXT NOT NULL,
-  password_hash TEXT NOT NULL,
-  role TEXT CHECK(role IN ('admin','deliverer')) NOT NULL,
-  created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  nome TEXT NOT NULL,
+  senha_hash TEXT NOT NULL,
+  perfil TEXT CHECK(perfil IN ('admin','entregador')) NOT NULL,
+  criado_em TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS deliverers (
+CREATE TABLE IF NOT EXISTS entregadores (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id INTEGER UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  phone TEXT,
-  vehicle_type TEXT,
-  active INTEGER NOT NULL DEFAULT 1
+  usuario_id INTEGER UNIQUE NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  telefone TEXT,
+  tipo_veiculo TEXT,
+  ativo INTEGER NOT NULL DEFAULT 1
 );
 
-CREATE TABLE IF NOT EXISTS volume_categories (
+CREATE TABLE IF NOT EXISTS categorias_volume (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  collective_id INTEGER NOT NULL REFERENCES collectives(id) ON DELETE CASCADE,
-  key TEXT NOT NULL,
-  label TEXT NOT NULL,
-  factor REAL NOT NULL DEFAULT 1,
-  UNIQUE(collective_id, key)
+  coletivo_id INTEGER NOT NULL REFERENCES coletivos(id) ON DELETE CASCADE,
+  chave TEXT NOT NULL,
+  rotulo TEXT NOT NULL,
+  fator REAL NOT NULL DEFAULT 1,
+  UNIQUE(coletivo_id, chave)
 );
 
-CREATE TABLE IF NOT EXISTS deliveries (
+CREATE TABLE IF NOT EXISTS entregas (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  collective_id INTEGER NOT NULL REFERENCES collectives(id) ON DELETE CASCADE,
-  customer_name TEXT NOT NULL,
-  customer_phone TEXT,
-  pickup_address TEXT,
-  pickup_lat REAL,
-  pickup_lng REAL,
-  delivery_address TEXT NOT NULL,
-  delivery_lat REAL NOT NULL,
-  delivery_lng REAL NOT NULL,
-  distance_km REAL,
-  volume_category TEXT NOT NULL,
-  base_price REAL NOT NULL,
-  distance_price REAL NOT NULL,
-  volume_factor REAL NOT NULL DEFAULT 1,
-  price REAL NOT NULL,
-  platform_fee_type TEXT,
-  platform_fee_value REAL,
-  platform_fee REAL NOT NULL,
-  final_price REAL NOT NULL,
-  deliverer_id INTEGER REFERENCES deliverers(id) ON DELETE SET NULL,
-  status TEXT CHECK(status IN ('pending','assigned','in_progress','delivered','cancelled')) NOT NULL DEFAULT 'pending',
-  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+  coletivo_id INTEGER NOT NULL REFERENCES coletivos(id) ON DELETE CASCADE,
+  nome_cliente TEXT NOT NULL,
+  telefone_cliente TEXT,
+  endereco_retirada TEXT,
+  latitude_retirada REAL,
+  longitude_retirada REAL,
+  endereco_entrega TEXT NOT NULL,
+  latitude_entrega REAL NOT NULL,
+  longitude_entrega REAL NOT NULL,
+  distancia_km REAL,
+  categoria_volume TEXT NOT NULL,
+  preco_base REAL NOT NULL,
+  preco_distancia REAL NOT NULL,
+  fator_volume REAL NOT NULL DEFAULT 1,
+  preco REAL NOT NULL,
+  tipo_taxa_plataforma TEXT,
+  valor_taxa_plataforma REAL,
+  taxa_plataforma REAL NOT NULL,
+  preco_final REAL NOT NULL,
+  entregador_id INTEGER REFERENCES entregadores(id) ON DELETE SET NULL,
+  status TEXT CHECK(status IN ('pendente','atribuida','em_andamento','entregue','cancelada')) NOT NULL DEFAULT 'pendente',
+  criado_em TEXT DEFAULT CURRENT_TIMESTAMP,
+  atualizado_em TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS idx_deliveries_status ON deliveries(status);
-CREATE INDEX IF NOT EXISTS idx_deliveries_deliverer ON deliveries(deliverer_id);
-CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
-CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
+CREATE INDEX IF NOT EXISTS idx_entregas_status ON entregas(status);
+CREATE INDEX IF NOT EXISTS idx_entregas_entregador ON entregas(entregador_id);
+CREATE INDEX IF NOT EXISTS idx_usuarios_email ON usuarios(email);
+CREATE INDEX IF NOT EXISTS idx_usuarios_perfil ON usuarios(perfil);
 `
 
-export async function runMigrations() {
-  const db = getDbClient()
-  db.exec(migrations)
+export async function executarMigracoes() {
+  const db = obterClienteDb()
+  db.exec(migracoes)
 }
 
-export async function createDefaultVolumeCategories(collectiveId: number) {
-  const defaults = [
-    { key: 'small', label: 'Pequeno', factor: 1 },
-    { key: 'medium', label: 'Médio', factor: 1.2 },
-    { key: 'large', label: 'Grande', factor: 1.5 }
+export async function criarCategoriasVolumePadrao(coletivoId: number) {
+  const padroes = [
+    { chave: 'pequeno', rotulo: 'Pequeno', fator: 1 },
+    { chave: 'medio', rotulo: 'Médio', fator: 1.2 },
+    { chave: 'grande', rotulo: 'Grande', fator: 1.5 }
   ]
 
-  for (const item of defaults) {
-    await execute({
-      sql: `INSERT OR IGNORE INTO volume_categories (collective_id, key, label, factor)
+  for (const item of padroes) {
+    await executar({
+      sql: `INSERT OR IGNORE INTO categorias_volume (coletivo_id, chave, rotulo, fator)
             VALUES (?, ?, ?, ?)`,
-      args: [collectiveId, item.key, item.label, item.factor]
+      args: [coletivoId, item.chave, item.rotulo, item.fator]
     })
   }
 }
 
-export function rowToCollective(row: DbRow): Collective {
+export function linhaParaColetivo(linha: LinhaDb): Coletivo {
   return {
-    id: Number(row.id),
-    name: String(row.name),
-    slug: String(row.slug),
-    primaryColor: String(row.primary_color),
-    neutralColor: String(row.neutral_color),
-    baseAddress: row.base_address ? String(row.base_address) : undefined,
-    baseLat: row.base_lat !== null && row.base_lat !== undefined ? Number(row.base_lat) : undefined,
-    baseLng: row.base_lng !== null && row.base_lng !== undefined ? Number(row.base_lng) : undefined,
-    deliveryRadiusKm: Number(row.delivery_radius_km),
-    basePrice: Number(row.base_price),
-    pricePerKm: Number(row.price_per_km),
-    platformFeeType: String(row.platform_fee_type) as PlatformFeeType,
-    platformFeeValue: Number(row.platform_fee_value),
-    createdAt: String(row.created_at)
+    id: Number(linha.id),
+    nome: String(linha.nome),
+    slug: String(linha.slug),
+    corPrimaria: String(linha.cor_primaria),
+    corNeutra: String(linha.cor_neutra),
+    enderecoBase: linha.endereco_base ? String(linha.endereco_base) : undefined,
+    latitudeBase: linha.latitude_base !== null && linha.latitude_base !== undefined ? Number(linha.latitude_base) : undefined,
+    longitudeBase: linha.longitude_base !== null && linha.longitude_base !== undefined ? Number(linha.longitude_base) : undefined,
+    raioEntregaKm: Number(linha.raio_entrega_km),
+    precoBase: Number(linha.preco_base),
+    precoPorKm: Number(linha.preco_por_km),
+    tipoTaxaPlataforma: String(linha.tipo_taxa_plataforma) as TipoTaxaPlataforma,
+    valorTaxaPlataforma: Number(linha.valor_taxa_plataforma),
+    criadoEm: String(linha.criado_em)
   }
 }
 
-export function rowToUser(row: DbRow): User {
+export function linhaParaUsuario(linha: LinhaDb): Usuario {
   return {
-    id: Number(row.id),
-    email: String(row.email),
-    name: String(row.name),
-    role: String(row.role) as UserRole,
-    createdAt: String(row.created_at)
+    id: Number(linha.id),
+    email: String(linha.email),
+    nome: String(linha.nome),
+    perfil: String(linha.perfil) as PerfilUsuario,
+    criadoEm: String(linha.criado_em)
   }
 }
 
-export function rowToDeliverer(row: DbRow): Deliverer {
+export function linhaParaEntregador(linha: LinhaDb): Entregador {
   return {
-    id: Number(row.id),
-    userId: Number(row.user_id),
-    phone: row.phone ? String(row.phone) : undefined,
-    vehicleType: row.vehicle_type ? String(row.vehicle_type) : undefined,
-    active: Boolean(row.active)
+    id: Number(linha.id),
+    usuarioId: Number(linha.usuario_id),
+    telefone: linha.telefone ? String(linha.telefone) : undefined,
+    tipoVeiculo: linha.tipo_veiculo ? String(linha.tipo_veiculo) : undefined,
+    ativo: Boolean(linha.ativo)
   }
 }
 
-export function rowToDelivery(row: DbRow): Delivery {
+export function linhaParaEntrega(linha: LinhaDb): Entrega {
   return {
-    id: Number(row.id),
-    collectiveId: Number(row.collective_id),
-    customerName: String(row.customer_name),
-    customerPhone: row.customer_phone ? String(row.customer_phone) : undefined,
-    pickupAddress: row.pickup_address ? String(row.pickup_address) : undefined,
-    pickupLat: row.pickup_lat !== null && row.pickup_lat !== undefined ? Number(row.pickup_lat) : undefined,
-    pickupLng: row.pickup_lng !== null && row.pickup_lng !== undefined ? Number(row.pickup_lng) : undefined,
-    deliveryAddress: String(row.delivery_address),
-    deliveryLat: Number(row.delivery_lat),
-    deliveryLng: Number(row.delivery_lng),
-    distanceKm: row.distance_km !== null && row.distance_km !== undefined ? Number(row.distance_km) : undefined,
-    volumeCategory: String(row.volume_category),
-    basePrice: Number(row.base_price),
-    distancePrice: Number(row.distance_price),
-    volumeFactor: Number(row.volume_factor),
-    price: Number(row.price),
-    platformFeeType: String(row.platform_fee_type) as PlatformFeeType,
-    platformFeeValue: Number(row.platform_fee_value),
-    platformFee: Number(row.platform_fee),
-    finalPrice: Number(row.final_price),
-    delivererId: row.deliverer_id !== null && row.deliverer_id !== undefined ? Number(row.deliverer_id) : undefined,
-    status: String(row.status) as DeliveryStatus,
-    createdAt: String(row.created_at),
-    updatedAt: String(row.updated_at)
+    id: Number(linha.id),
+    coletivoId: Number(linha.coletivo_id),
+    nomeCliente: String(linha.nome_cliente),
+    telefoneCliente: linha.telefone_cliente ? String(linha.telefone_cliente) : undefined,
+    enderecoRetirada: linha.endereco_retirada ? String(linha.endereco_retirada) : undefined,
+    latitudeRetirada: linha.latitude_retirada !== null && linha.latitude_retirada !== undefined ? Number(linha.latitude_retirada) : undefined,
+    longitudeRetirada: linha.longitude_retirada !== null && linha.longitude_retirada !== undefined ? Number(linha.longitude_retirada) : undefined,
+    enderecoEntrega: String(linha.endereco_entrega),
+    latitudeEntrega: Number(linha.latitude_entrega),
+    longitudeEntrega: Number(linha.longitude_entrega),
+    distanciaKm: linha.distancia_km !== null && linha.distancia_km !== undefined ? Number(linha.distancia_km) : undefined,
+    categoriaVolume: String(linha.categoria_volume),
+    precoBase: Number(linha.preco_base),
+    precoDistancia: Number(linha.preco_distancia),
+    fatorVolume: Number(linha.fator_volume),
+    preco: Number(linha.preco),
+    tipoTaxaPlataforma: String(linha.tipo_taxa_plataforma) as TipoTaxaPlataforma,
+    valorTaxaPlataforma: Number(linha.valor_taxa_plataforma),
+    taxaPlataforma: Number(linha.taxa_plataforma),
+    precoFinal: Number(linha.preco_final),
+    entregadorId: linha.entregador_id !== null && linha.entregador_id !== undefined ? Number(linha.entregador_id) : undefined,
+    status: String(linha.status) as StatusEntrega,
+    criadoEm: String(linha.criado_em),
+    atualizadoEm: String(linha.atualizado_em)
   }
 }
 
-export function rowToVolumeCategory(row: DbRow): VolumeCategory {
+export function linhaParaCategoriaVolume(linha: LinhaDb): CategoriaVolume {
   return {
-    id: Number(row.id),
-    collectiveId: Number(row.collective_id),
-    key: String(row.key),
-    label: String(row.label),
-    factor: Number(row.factor)
+    id: Number(linha.id),
+    coletivoId: Number(linha.coletivo_id),
+    chave: String(linha.chave),
+    rotulo: String(linha.rotulo),
+    fator: Number(linha.fator)
   }
 }

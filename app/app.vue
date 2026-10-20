@@ -26,18 +26,18 @@ useHead({
   titleTemplate: '%s · Aplicativo de Entregas'
 })
 
-const { user, fetchMe, logout } = useAuth()
-const { fetchCollective } = useCollective()
+const { usuario, buscarMe, logout } = useAutenticacao()
+const { buscarColetivo } = useColetivo()
 const appConfig = useAppConfig()
 
 onMounted(async () => {
-  await fetchMe()
-  const c = await fetchCollective()
+  await buscarMe()
+  const c = await buscarColetivo()
   if (c) {
-    appConfig.ui.colors.primary = c.primaryColor
-    appConfig.ui.colors.neutral = c.neutralColor
+    appConfig.ui.colors.primary = c.corPrimaria
+    appConfig.ui.colors.neutral = c.corNeutra
     useHead({
-      titleTemplate: `%s · ${c.name}`
+      titleTemplate: `%s · ${c.nome}`
     })
   }
 })
@@ -61,10 +61,10 @@ onMounted(async () => {
 
           <ClientOnly>
             <UDropdownMenu
-              v-if="user"
+              v-if="usuario"
               :items="[
-                { label: user.name, type: 'label' },
-                { label: 'Dashboard', to: user.role === 'admin' ? '/admin' : '/entregador', icon: 'lucide:layout-dashboard' },
+                { label: usuario.nome, type: 'label' },
+                { label: 'Painel', to: usuario.perfil === 'admin' ? '/admin' : '/entregador', icon: 'lucide:layout-dashboard' },
                 { label: 'Sair', icon: 'lucide:log-out', onSelect: logout }
               ]"
             >

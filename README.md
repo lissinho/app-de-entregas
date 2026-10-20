@@ -21,6 +21,10 @@ Aplicativo full-stack para controle simples de entregas de bicicleta/moto, volta
 - Fluxo de status: pendente → atribuída → em andamento → entregue.
 - Visão de ganhos para o entregador.
 
+## Domínio em português
+
+Todos os modelos de dados, rotas da API, páginas e símbolos TypeScript usam termos em português. Exemplos: `Entrega`, `Entregador`, `Coletivo`, `CategoriaVolume`, rotas `/api/entregas`, `/api/entregadores` e `/admin/configuracao-inicial`.
+
 ## Regras de negócio
 
 ### Preço da entrega

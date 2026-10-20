@@ -1,14 +1,14 @@
 <script setup lang="ts">
 definePageMeta({
-  middleware: ['deliverer']
+  middleware: ['entregador']
 })
 
-const { user, logout } = useAuth()
-const { collective } = useCollective()
+const { usuario, logout } = useAutenticacao()
+const { coletivo } = useColetivo()
 
 const links = [
   { label: 'Minhas entregas', to: '/entregador', icon: 'lucide:package' },
-  { label: 'Ganhos', to: '/entregador/earnings', icon: 'lucide:dollar-sign' }
+  { label: 'Ganhos', to: '/entregador/ganhos', icon: 'lucide:dollar-sign' }
 ]
 </script>
 
@@ -20,9 +20,9 @@ const links = [
           <div class="flex items-center gap-4">
             <AppLogo class="w-auto h-6" />
             <span
-              v-if="collective"
+              v-if="coletivo"
               class="font-semibold"
-            >{{ collective.name }}</span>
+            >{{ coletivo.nome }}</span>
           </div>
 
           <div class="flex items-center gap-3">
@@ -47,7 +47,7 @@ const links = [
                 color="neutral"
                 icon="lucide:user"
               >
-                {{ user?.name }}
+                {{ usuario?.nome }}
               </UButton>
             </UDropdownMenu>
           </div>

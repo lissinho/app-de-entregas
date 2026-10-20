@@ -3,14 +3,14 @@ definePageMeta({
   middleware: ['admin']
 })
 
-const { user, logout } = useAuth()
-const { collective } = useCollective()
+const { usuario, logout } = useAutenticacao()
+const { coletivo } = useColetivo()
 
 const links = [
-  { label: 'Dashboard', to: '/admin', icon: 'lucide:layout-dashboard' },
+  { label: 'Painel', to: '/admin', icon: 'lucide:layout-dashboard' },
   { label: 'Configurações', to: '/admin/config', icon: 'lucide:settings' },
-  { label: 'Entregadores', to: '/admin/deliverers', icon: 'lucide:users' },
-  { label: 'Entregas', to: '/admin/deliveries', icon: 'lucide:package' }
+  { label: 'Entregadores', to: '/admin/entregadores', icon: 'lucide:users' },
+  { label: 'Entregas', to: '/admin/entregas', icon: 'lucide:package' }
 ]
 </script>
 
@@ -22,9 +22,9 @@ const links = [
           <div class="flex items-center gap-4">
             <AppLogo class="w-auto h-6" />
             <span
-              v-if="collective"
+              v-if="coletivo"
               class="font-semibold"
-            >{{ collective.name }}</span>
+            >{{ coletivo.nome }}</span>
           </div>
 
           <div class="flex items-center gap-3">
@@ -49,7 +49,7 @@ const links = [
                 color="neutral"
                 icon="lucide:user"
               >
-                {{ user?.name }}
+                {{ usuario?.nome }}
               </UButton>
             </UDropdownMenu>
           </div>

@@ -3,32 +3,32 @@ definePageMeta({
   middleware: ['admin']
 })
 
-const { data: deliveriesData, pending } = await useFetch('/api/deliveries', { server: false })
-const deliveries = computed(() => deliveriesData.value?.deliveries ?? [])
+const { data: entregasData, pending } = await useFetch('/api/entregas', { server: false })
+const entregas = computed(() => entregasData.value?.entregas ?? [])
 
-const stats = computed(() => {
-  const all = deliveries.value
+const estatisticas = computed(() => {
+  const all = entregas.value
   return {
     total: all.length,
-    pending: all.filter(d => d.status === 'pending').length,
-    inProgress: all.filter(d => d.status === 'in_progress').length,
-    delivered: all.filter(d => d.status === 'delivered').length
+    pendentes: all.filter(e => e.status === 'pendente').length,
+    emAndamento: all.filter(e => e.status === 'em_andamento').length,
+    entregues: all.filter(e => e.status === 'entregue').length
   }
 })
 
-const statusLabel: Record<DeliveryStatus, string> = {
-  pending: 'Pendente',
-  assigned: 'Atribuída',
-  in_progress: 'Em andamento',
-  delivered: 'Entregue',
-  cancelled: 'Cancelada'
+const rotuloStatus: Record<StatusEntrega, string> = {
+  pendente: 'Pendente',
+  atribuida: 'Atribuída',
+  em_andamento: 'Em andamento',
+  entregue: 'Entregue',
+  cancelada: 'Cancelada'
 }
 </script>
 
 <template>
   <div class="space-y-6">
     <h1 class="text-2xl font-bold">
-      Dashboard
+      Painel
     </h1>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -37,7 +37,7 @@ const statusLabel: Record<DeliveryStatus, string> = {
           Total de entregas
         </div>
         <div class="text-3xl font-bold">
-          {{ stats.total }}
+          {{ estatisticas.total }}
         </div>
       </UCard>
 
@@ -46,7 +46,7 @@ const statusLabel: Record<DeliveryStatus, string> = {
           Pendentes
         </div>
         <div class="text-3xl font-bold">
-          {{ stats.pending }}
+          {{ estatisticas.pendentes }}
         </div>
       </UCard>
 
@@ -55,7 +55,7 @@ const statusLabel: Record<DeliveryStatus, string> = {
           Em andamento
         </div>
         <div class="text-3xl font-bold">
-          {{ stats.inProgress }}
+          {{ estatisticas.emAndamento }}
         </div>
       </UCard>
 
@@ -64,7 +64,7 @@ const statusLabel: Record<DeliveryStatus, string> = {
           Entregues
         </div>
         <div class="text-3xl font-bold">
-          {{ stats.delivered }}
+          {{ estatisticas.entregues }}
         </div>
       </UCard>
     </div>
@@ -76,7 +76,7 @@ const statusLabel: Record<DeliveryStatus, string> = {
             Entregas recentes
           </h2>
           <UButton
-            to="/admin/deliveries"
+            to="/admin/entregas"
             color="primary"
             size="sm"
           >
@@ -91,12 +91,12 @@ const statusLabel: Record<DeliveryStatus, string> = {
       />
       <UTable
         v-else
-        :data="deliveries.slice(0, 5)"
+        :data="entregas.slice(0, 5)"
         :columns="[
-          { accessorKey: 'customerName', header: 'Cliente' },
-          { accessorKey: 'deliveryAddress', header: 'Endereço' },
-          { accessorKey: 'status', header: 'Status', cell: ({ row }) => statusLabel[row.getValue('status') as DeliveryStatus] },
-          { accessorKey: 'finalPrice', header: 'Valor total', cell: ({ row }) => `R$ ${Number(row.getValue('finalPrice')).toFixed(2)}` }
+          { accessorKey: 'nomeCliente', header: 'Cliente' },
+          { accessorKey: 'enderecoEntrega', header: 'Endereço' },
+          { accessorKey: 'status', header: 'Status', cell: ({ row }) => rotuloStatus[row.getValue('status') as StatusEntrega] },
+          { accessorKey: 'precoFinal', header: 'Valor total', cell: ({ row }) => `R$ ${Number(row.getValue('precoFinal')).toFixed(2)}` }
         ]"
       />
     </UCard>

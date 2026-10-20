@@ -1,9 +1,9 @@
 export default defineNitroPlugin(async () => {
   try {
-    await runMigrations()
-    console.log('Database migrations applied successfully')
+    await executarMigracoes()
+    console.log('Migrações do banco de dados aplicadas com sucesso')
   } catch (error) {
-    console.error('Failed to apply database migrations:', error)
+    console.error('Falha ao aplicar migrações do banco de dados:', error)
     throw error
   }
 })

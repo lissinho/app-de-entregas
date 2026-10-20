@@ -3,11 +3,11 @@ definePageMeta({
   middleware: ['admin']
 })
 
-const { fetchCollective, collective } = useCollective()
+const { buscarColetivo, coletivo } = useColetivo()
 const toast = useToast()
 
-const { data: categoriesData, refresh: refreshCategories } = await useFetch('/api/volume-categories')
-const categories = computed(() => categoriesData.value?.categories ?? [])
+const { data: categoriasData, refresh: recarregarCategorias } = await useFetch('/api/categorias-de-volume')
+const categorias = computed(() => categoriasData.value?.categorias ?? [])
 
 const colorOptions = [
   'red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal',
@@ -19,49 +19,49 @@ const loading = ref(false)
 const savingCategories = ref(false)
 
 const state = reactive({
-  name: '',
-  primaryColor: 'orange',
-  neutralColor: 'neutral',
-  baseAddress: '',
-  deliveryRadiusKm: 10,
-  basePrice: 0,
-  pricePerKm: 0,
-  platformFeeType: 'percent' as PlatformFeeType,
-  platformFeeValue: 0
+  nome: '',
+  corPrimaria: 'orange',
+  corNeutra: 'neutral',
+  enderecoBase: '',
+  raioEntregaKm: 10,
+  precoBase: 0,
+  precoPorKm: 0,
+  tipoTaxaPlataforma: 'percentual' as TipoTaxaPlataforma,
+  valorTaxaPlataforma: 0
 })
 
 watchEffect(() => {
-  if (collective.value) {
-    state.name = collective.value.name
-    state.primaryColor = collective.value.primaryColor
-    state.neutralColor = collective.value.neutralColor
-    state.baseAddress = collective.value.baseAddress || ''
-    state.deliveryRadiusKm = collective.value.deliveryRadiusKm
-    state.basePrice = collective.value.basePrice
-    state.pricePerKm = collective.value.pricePerKm
-    state.platformFeeType = collective.value.platformFeeType
-    state.platformFeeValue = collective.value.platformFeeValue
+  if (coletivo.value) {
+    state.nome = coletivo.value.nome
+    state.corPrimaria = coletivo.value.corPrimaria
+    state.corNeutra = coletivo.value.corNeutra
+    state.enderecoBase = coletivo.value.enderecoBase || ''
+    state.raioEntregaKm = coletivo.value.raioEntregaKm
+    state.precoBase = coletivo.value.precoBase
+    state.precoPorKm = coletivo.value.precoPorKm
+    state.tipoTaxaPlataforma = coletivo.value.tipoTaxaPlataforma
+    state.valorTaxaPlataforma = coletivo.value.valorTaxaPlataforma
   }
 })
 
 async function onSubmit() {
   loading.value = true
   try {
-    await $fetch('/api/collective', {
+    await $fetch('/api/coletivo', {
       method: 'PATCH',
       body: {
-        name: state.name,
-        primaryColor: state.primaryColor,
-        neutralColor: state.neutralColor,
-        baseAddress: state.baseAddress,
-        deliveryRadiusKm: state.deliveryRadiusKm,
-        basePrice: state.basePrice,
-        pricePerKm: state.pricePerKm,
-        platformFeeType: state.platformFeeType,
-        platformFeeValue: state.platformFeeValue
+        nome: state.nome,
+        corPrimaria: state.corPrimaria,
+        corNeutra: state.corNeutra,
+        enderecoBase: state.enderecoBase,
+        raioEntregaKm: state.raioEntregaKm,
+        precoBase: state.precoBase,
+        precoPorKm: state.precoPorKm,
+        tipoTaxaPlataforma: state.tipoTaxaPlataforma,
+        valorTaxaPlataforma: state.valorTaxaPlataforma
       }
     })
-    await fetchCollective()
+    await buscarColetivo()
     toast.add({ title: 'Configurações salvas', color: 'success' })
   } catch (err: unknown) {
     toast.add({ title: getApiErrorMessage(err) || 'Erro ao salvar', color: 'error' })
@@ -70,28 +70,28 @@ async function onSubmit() {
   }
 }
 
-const editableCategories = ref<{ key: string, label: string, factor: number }[]>([])
+const categoriasEditaveis = ref<{ chave: string, rotulo: string, fator: number }[]>([])
 
-watch(categories, (list) => {
-  editableCategories.value = list.map(c => ({ key: c.key, label: c.label, factor: c.factor }))
+watch(categorias, (list) => {
+  categoriasEditaveis.value = list.map(c => ({ chave: c.chave, rotulo: c.rotulo, fator: c.fator }))
 }, { immediate: true })
 
-function addCategory() {
-  editableCategories.value.push({ key: `cat-${Date.now()}`, label: '', factor: 1 })
+function adicionarCategoria() {
+  categoriasEditaveis.value.push({ chave: `cat-${Date.now()}`, rotulo: '', fator: 1 })
 }
 
-function removeCategory(index: number) {
-  editableCategories.value.splice(index, 1)
+function removerCategoria(index: number) {
+  categoriasEditaveis.value.splice(index, 1)
 }
 
-async function saveCategories() {
+async function salvarCategorias() {
   savingCategories.value = true
   try {
-    await $fetch('/api/volume-categories', {
+    await $fetch('/api/categorias-de-volume', {
       method: 'PATCH',
-      body: { categories: editableCategories.value }
+      body: { categorias: categoriasEditaveis.value }
     })
-    await refreshCategories()
+    await recarregarCategorias()
     toast.add({ title: 'Categorias salvas', color: 'success' })
   } catch (err: unknown) {
     toast.add({ title: getApiErrorMessage(err) || 'Erro ao salvar', color: 'error' })
@@ -123,7 +123,7 @@ async function saveCategories() {
           required
         >
           <UInput
-            v-model="state.name"
+            v-model="state.nome"
             required
           />
         </UFormField>
@@ -134,7 +134,7 @@ async function saveCategories() {
             required
           >
             <USelect
-              v-model="state.primaryColor"
+              v-model="state.corPrimaria"
               :items="colorOptions"
               required
             />
@@ -145,7 +145,7 @@ async function saveCategories() {
             required
           >
             <USelect
-              v-model="state.neutralColor"
+              v-model="state.corNeutra"
               :items="colorOptions"
               required
             />
@@ -157,7 +157,7 @@ async function saveCategories() {
           hint="Usado para calcular raio de entrega"
         >
           <UInput
-            v-model="state.baseAddress"
+            v-model="state.enderecoBase"
             placeholder="Rua, número, bairro, cidade"
           />
         </UFormField>
@@ -168,7 +168,7 @@ async function saveCategories() {
             required
           >
             <UInput
-              v-model.number="state.deliveryRadiusKm"
+              v-model.number="state.raioEntregaKm"
               type="number"
               min="0.1"
               step="0.1"
@@ -181,7 +181,7 @@ async function saveCategories() {
             required
           >
             <UInput
-              v-model.number="state.basePrice"
+              v-model.number="state.precoBase"
               type="number"
               min="0"
               step="0.01"
@@ -196,7 +196,7 @@ async function saveCategories() {
             required
           >
             <UInput
-              v-model.number="state.pricePerKm"
+              v-model.number="state.precoPorKm"
               type="number"
               min="0"
               step="0.01"
@@ -210,13 +210,13 @@ async function saveCategories() {
           >
             <div class="flex gap-2">
               <USelect
-                v-model="state.platformFeeType"
-                :items="[{ label: 'Percentual', value: 'percent' }, { label: 'Fixo', value: 'fixed' }]"
+                v-model="state.tipoTaxaPlataforma"
+                :items="[{ label: 'Percentual', value: 'percentual' }, { label: 'Fixo', value: 'fixo' }]"
                 class="w-40"
                 required
               />
               <UInput
-                v-model.number="state.platformFeeValue"
+                v-model.number="state.valorTaxaPlataforma"
                 type="number"
                 min="0"
                 step="0.01"
@@ -245,21 +245,21 @@ async function saveCategories() {
 
       <div class="space-y-3">
         <div
-          v-for="(category, index) in editableCategories"
-          :key="category.key"
+          v-for="(categoria, index) in categoriasEditaveis"
+          :key="categoria.chave"
           class="grid grid-cols-[1fr_1fr_auto_auto] gap-2 items-end"
         >
           <UFormField label="Identificador">
-            <UInput v-model="category.key" />
+            <UInput v-model="categoria.chave" />
           </UFormField>
 
           <UFormField label="Nome">
-            <UInput v-model="category.label" />
+            <UInput v-model="categoria.rotulo" />
           </UFormField>
 
           <UFormField label="Fator">
             <UInput
-              v-model.number="category.factor"
+              v-model.number="categoria.fator"
               type="number"
               min="0"
               step="0.01"
@@ -270,7 +270,7 @@ async function saveCategories() {
             color="error"
             variant="ghost"
             icon="lucide:trash"
-            @click="removeCategory(index)"
+            @click="removerCategoria(index)"
           />
         </div>
 
@@ -278,14 +278,14 @@ async function saveCategories() {
           <UButton
             variant="outline"
             icon="lucide:plus"
-            @click="addCategory"
+            @click="adicionarCategoria"
           >
             Adicionar categoria
           </UButton>
           <UButton
             color="primary"
             :loading="savingCategories"
-            @click="saveCategories"
+            @click="salvarCategorias"
           >
             Salvar categorias
           </UButton>

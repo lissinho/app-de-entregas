@@ -1,14 +1,14 @@
 export default defineNuxtPlugin(async () => {
   const appConfig = useAppConfig()
-  const { fetchCollective } = useCollective()
-  const collective = await fetchCollective()
+  const { buscarColetivo } = useColetivo()
+  const coletivo = await buscarColetivo()
 
-  if (collective) {
-    appConfig.ui.colors.primary = collective.primaryColor
-    appConfig.ui.colors.neutral = collective.neutralColor
+  if (coletivo) {
+    appConfig.ui.colors.primary = coletivo.corPrimaria
+    appConfig.ui.colors.neutral = coletivo.corNeutra
 
     useHead({
-      titleTemplate: `%s · ${collective.name}`
+      titleTemplate: `%s · ${coletivo.nome}`
     })
   }
 })

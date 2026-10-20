@@ -1,9 +1,9 @@
 <script setup lang="ts">
-const { login, redirectForRole, fetchMe } = useAuth()
+const { login, redirecionarPorPerfil, buscarMe } = useAutenticacao()
 
 const state = reactive({
   email: '',
-  password: ''
+  senha: ''
 })
 const error = ref('')
 const loading = ref(false)
@@ -12,8 +12,8 @@ async function onSubmit() {
   error.value = ''
   loading.value = true
   try {
-    const user = await login(state.email, state.password)
-    await redirectForRole(user.role)
+    const usuario = await login(state.email, state.senha)
+    await redirecionarPorPerfil(usuario.perfil)
   } catch (err: unknown) {
     error.value = getApiErrorMessage(err) || 'Erro ao entrar'
   } finally {
@@ -22,9 +22,9 @@ async function onSubmit() {
 }
 
 onMounted(async () => {
-  const user = await fetchMe()
-  if (user) {
-    await redirectForRole(user.role)
+  const usuario = await buscarMe()
+  if (usuario) {
+    await redirecionarPorPerfil(usuario.perfil)
   }
 })
 </script>
@@ -71,7 +71,7 @@ onMounted(async () => {
           required
         >
           <UInput
-            v-model="state.password"
+            v-model="state.senha"
             type="password"
             required
           />

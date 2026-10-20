@@ -1,50 +1,50 @@
-import type { PlatformFeeType } from '~/types'
+import type { TipoTaxaPlataforma } from '~/types'
 
-export interface PricingInput {
-  basePrice: number
-  pricePerKm: number
-  distanceKm: number
-  volumeFactor: number
-  platformFeeType: PlatformFeeType
-  platformFeeValue: number
+export interface EntradaPreco {
+  precoBase: number
+  precoPorKm: number
+  distanciaKm: number
+  fatorVolume: number
+  tipoTaxaPlataforma: TipoTaxaPlataforma
+  valorTaxaPlataforma: number
 }
 
-export interface PricingResult {
-  basePrice: number
-  distancePrice: number
-  volumeFactor: number
-  price: number
-  platformFeeType: PlatformFeeType
-  platformFeeValue: number
-  platformFee: number
-  finalPrice: number
+export interface ResultadoPreco {
+  precoBase: number
+  precoDistancia: number
+  fatorVolume: number
+  preco: number
+  tipoTaxaPlataforma: TipoTaxaPlataforma
+  valorTaxaPlataforma: number
+  taxaPlataforma: number
+  precoFinal: number
 }
 
-export function calculatePricing(input: PricingInput): PricingResult {
-  const distancePrice = input.distanceKm * input.pricePerKm
-  const price = (input.basePrice + distancePrice) * input.volumeFactor
+export function calcularPreco(entrada: EntradaPreco): ResultadoPreco {
+  const precoDistancia = entrada.distanciaKm * entrada.precoPorKm
+  const preco = (entrada.precoBase + precoDistancia) * entrada.fatorVolume
 
-  let platformFee = 0
-  if (input.platformFeeType === 'percent') {
-    platformFee = price * (input.platformFeeValue / 100)
-  } else if (input.platformFeeType === 'fixed') {
-    platformFee = input.platformFeeValue
+  let taxaPlataforma = 0
+  if (entrada.tipoTaxaPlataforma === 'percentual') {
+    taxaPlataforma = preco * (entrada.valorTaxaPlataforma / 100)
+  } else if (entrada.tipoTaxaPlataforma === 'fixo') {
+    taxaPlataforma = entrada.valorTaxaPlataforma
   }
 
-  const finalPrice = price + platformFee
+  const precoFinal = preco + taxaPlataforma
 
   return {
-    basePrice: input.basePrice,
-    distancePrice,
-    volumeFactor: input.volumeFactor,
-    price: roundCurrency(price),
-    platformFeeType: input.platformFeeType,
-    platformFeeValue: input.platformFeeValue,
-    platformFee: roundCurrency(platformFee),
-    finalPrice: roundCurrency(finalPrice)
+    precoBase: entrada.precoBase,
+    precoDistancia,
+    fatorVolume: entrada.fatorVolume,
+    preco: arredondarMoeda(preco),
+    tipoTaxaPlataforma: entrada.tipoTaxaPlataforma,
+    valorTaxaPlataforma: entrada.valorTaxaPlataforma,
+    taxaPlataforma: arredondarMoeda(taxaPlataforma),
+    precoFinal: arredondarMoeda(precoFinal)
   }
 }
 
-export function roundCurrency(value: number): number {
-  return Math.round(value * 100) / 100
+export function arredondarMoeda(valor: number): number {
+  return Math.round(valor * 100) / 100
 }

@@ -1,75 +1,75 @@
-export type UserRole = 'admin' | 'deliverer'
+export type PerfilUsuario = 'admin' | 'entregador'
 
-export type DeliveryStatus = 'pending' | 'assigned' | 'in_progress' | 'delivered' | 'cancelled'
+export type StatusEntrega = 'pendente' | 'atribuida' | 'em_andamento' | 'entregue' | 'cancelada'
 
-export type PlatformFeeType = 'fixed' | 'percent'
+export type TipoTaxaPlataforma = 'fixo' | 'percentual'
 
-export interface User {
+export interface Usuario {
   id: number
   email: string
-  name: string
-  role: UserRole
-  createdAt: string
+  nome: string
+  perfil: PerfilUsuario
+  criadoEm: string
 }
 
-export interface Collective {
+export interface Coletivo {
   id: number
-  name: string
+  nome: string
   slug: string
-  primaryColor: string
-  neutralColor: string
-  baseAddress?: string
-  baseLat?: number
-  baseLng?: number
-  deliveryRadiusKm: number
-  basePrice: number
-  pricePerKm: number
-  platformFeeType: PlatformFeeType
-  platformFeeValue: number
-  createdAt: string
+  corPrimaria: string
+  corNeutra: string
+  enderecoBase?: string
+  latitudeBase?: number
+  longitudeBase?: number
+  raioEntregaKm: number
+  precoBase: number
+  precoPorKm: number
+  tipoTaxaPlataforma: TipoTaxaPlataforma
+  valorTaxaPlataforma: number
+  criadoEm: string
 }
 
-export interface VolumeCategory {
+export interface CategoriaVolume {
   id: number
-  collectiveId: number
-  key: string
-  label: string
-  factor: number
+  coletivoId: number
+  chave: string
+  rotulo: string
+  fator: number
 }
 
-export interface Deliverer {
+export interface Entregador {
   id: number
-  userId: number
-  phone?: string
-  vehicleType?: string
-  active: boolean
-  user?: User
+  usuarioId: number
+  telefone?: string
+  tipoVeiculo?: string
+  ativo: boolean
+  usuario?: Usuario
 }
 
-export interface Delivery {
+export interface Entrega {
   id: number
-  collectiveId: number
-  customerName: string
-  customerPhone?: string
-  pickupAddress?: string
-  pickupLat?: number
-  pickupLng?: number
-  deliveryAddress: string
-  deliveryLat: number
-  deliveryLng: number
-  distanceKm?: number
-  volumeCategory: string
-  basePrice: number
-  distancePrice: number
-  volumeFactor: number
-  price: number
-  platformFeeType: PlatformFeeType
-  platformFeeValue: number
-  platformFee: number
-  finalPrice: number
-  delivererId?: number
-  status: DeliveryStatus
-  createdAt: string
-  updatedAt: string
-  deliverer?: Deliverer
+  coletivoId: number
+  nomeCliente: string
+  telefoneCliente?: string
+  enderecoRetirada?: string
+  latitudeRetirada?: number
+  longitudeRetirada?: number
+  enderecoEntrega: string
+  latitudeEntrega: number
+  longitudeEntrega: number
+  distanciaKm?: number
+  categoriaVolume: string
+  precoBase: number
+  precoDistancia: number
+  fatorVolume: number
+  preco: number
+  tipoTaxaPlataforma: TipoTaxaPlataforma
+  valorTaxaPlataforma: number
+  taxaPlataforma: number
+  precoFinal: number
+  entregadorId?: number
+  status: StatusEntrega
+  criadoEm: string
+  atualizadoEm: string
+  entregador?: Entregador
 }

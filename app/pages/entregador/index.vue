@@ -1,36 +1,36 @@
 <script setup lang="ts">
 definePageMeta({
-  middleware: ['deliverer']
+  middleware: ['entregador']
 })
 
 const toast = useToast()
-const { data, pending, refresh } = await useFetch('/api/deliveries', { server: false })
-const deliveries = computed(() => data.value?.deliveries ?? [])
+const { data, pending, refresh } = await useFetch('/api/entregas', { server: false })
+const entregas = computed(() => data.value?.entregas ?? [])
 
-const statusLabel: Record<DeliveryStatus, string> = {
-  pending: 'Pendente',
-  assigned: 'Atribuída',
-  in_progress: 'Em andamento',
-  delivered: 'Entregue',
-  cancelled: 'Cancelada'
+const rotuloStatus: Record<StatusEntrega, string> = {
+  pendente: 'Pendente',
+  atribuida: 'Atribuída',
+  em_andamento: 'Em andamento',
+  entregue: 'Entregue',
+  cancelada: 'Cancelada'
 }
 
-const nextStatus: Record<DeliveryStatus, DeliveryStatus | null> = {
-  pending: null,
-  assigned: 'in_progress',
-  in_progress: 'delivered',
-  delivered: null,
-  cancelled: null
+const proximoStatus: Record<StatusEntrega, StatusEntrega | null> = {
+  pendente: null,
+  atribuida: 'em_andamento',
+  em_andamento: 'entregue',
+  entregue: null,
+  cancelada: null
 }
 
-async function advance(delivery: Delivery) {
-  const next = nextStatus[delivery.status]
-  if (!next) return
+async function avancar(entrega: Entrega) {
+  const proximo = proximoStatus[entrega.status]
+  if (!proximo) return
 
   try {
-    await $fetch(`/api/deliveries/${delivery.id}`, {
+    await $fetch(`/api/entregas/${entrega.id}`, {
       method: 'PATCH',
-      body: { status: next }
+      body: { status: proximo }
     })
     await refresh()
     toast.add({ title: 'Status atualizado', color: 'success' })
@@ -39,12 +39,12 @@ async function advance(delivery: Delivery) {
   }
 }
 
-const actionLabel: Record<DeliveryStatus, string> = {
-  pending: 'Aguardando atribuição',
-  assigned: 'Iniciar entrega',
-  in_progress: 'Marcar entregue',
-  delivered: 'Concluída',
-  cancelled: 'Cancelada'
+const rotuloAcao: Record<StatusEntrega, string> = {
+  pendente: 'Aguardando atribuição',
+  atribuida: 'Iniciar entrega',
+  em_andamento: 'Marcar entregue',
+  entregue: 'Concluída',
+  cancelada: 'Cancelada'
 }
 </script>
 
@@ -60,20 +60,20 @@ const actionLabel: Record<DeliveryStatus, string> = {
     />
     <UTable
       v-else
-      :data="deliveries"
+      :data="entregas"
       :columns="[
         { accessorKey: 'id', header: 'ID' },
-        { accessorKey: 'customerName', header: 'Cliente' },
-        { accessorKey: 'deliveryAddress', header: 'Endereço' },
-        { accessorKey: 'status', header: 'Status', cell: ({ row }) => statusLabel[row.getValue('status') as DeliveryStatus] },
-        { accessorKey: 'price', header: 'Valor', cell: ({ row }) => `R$ ${Number(row.getValue('price')).toFixed(2)}` },
+        { accessorKey: 'nomeCliente', header: 'Cliente' },
+        { accessorKey: 'enderecoEntrega', header: 'Endereço' },
+        { accessorKey: 'status', header: 'Status', cell: ({ row }) => rotuloStatus[row.getValue('status') as StatusEntrega] },
+        { accessorKey: 'preco', header: 'Valor', cell: ({ row }) => `R$ ${Number(row.getValue('preco')).toFixed(2)}` },
         { id: 'actions',
           header: 'Ação',
           cell: ({ row }) => h('button', {
             class: 'inline-flex items-center rounded px-2 py-1 text-xs font-medium bg-primary text-primary-foreground disabled:opacity-50 disabled:cursor-not-allowed',
-            disabled: !nextStatus[row.original.status],
-            onClick: () => advance(row.original)
-          }, () => actionLabel[row.original.status]) }
+            disabled: !proximoStatus[row.original.status],
+            onClick: () => avancar(row.original)
+          }, () => rotuloAcao[row.original.status]) }
       ]"
     />
   </div>

@@ -1,30 +1,30 @@
 import { type H3Event, useSession } from 'h3'
-import type { Deliverer, User, UserRole } from '~/types'
+import type { Entregador, Usuario, PerfilUsuario } from '~/types'
 
-const SESSION_NAME = 'app-de-entregas-session'
-const SESSION_MAX_AGE = 60 * 60 * 24 * 7 // 7 days
+const NOME_SESSAO = 'app-de-entregas-session'
+const SESSAO_MAX_AGE = 60 * 60 * 24 * 7 // 7 dias
 
-export interface SessionData {
-  userId: number
+export interface DadosSessao {
+  usuarioId: number
   email: string
-  name: string
-  role: UserRole
+  nome: string
+  perfil: PerfilUsuario
 }
 
-function getSessionPassword(): string {
+function obterSenhaSessao(): string {
   const config = useRuntimeConfig()
-  const password = config.session.password
-  if (!password) {
-    throw createError({ statusCode: 500, statusMessage: 'Session password not configured' })
+  const senha = config.session.password
+  if (!senha) {
+    throw createError({ statusCode: 500, statusMessage: 'Senha de sessão não configurada' })
   }
-  return password
+  return senha
 }
 
-export async function getAppSession(event: H3Event) {
-  return useSession<SessionData>(event, {
-    name: SESSION_NAME,
-    password: getSessionPassword(),
-    maxAge: SESSION_MAX_AGE,
+export async function obterSessaoApp(event: H3Event) {
+  return useSession<DadosSessao>(event, {
+    name: NOME_SESSAO,
+    password: obterSenhaSessao(),
+    maxAge: SESSAO_MAX_AGE,
     cookie: {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -34,46 +34,46 @@ export async function getAppSession(event: H3Event) {
   })
 }
 
-export async function requireAuth(event: H3Event): Promise<SessionData> {
-  const session = await getAppSession(event)
-  if (!session.data.userId) {
-    throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
+export async function exigirAutenticacao(event: H3Event): Promise<DadosSessao> {
+  const sessao = await obterSessaoApp(event)
+  if (!sessao.data.usuarioId) {
+    throw createError({ statusCode: 401, statusMessage: 'Não autenticado' })
   }
-  return session.data
+  return sessao.data
 }
 
-export async function requireAdmin(event: H3Event): Promise<SessionData> {
-  const user = await requireAuth(event)
-  if (user.role !== 'admin') {
-    throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
+export async function exigirAdmin(event: H3Event): Promise<DadosSessao> {
+  const usuario = await exigirAutenticacao(event)
+  if (usuario.perfil !== 'admin') {
+    throw createError({ statusCode: 403, statusMessage: 'Acesso negado' })
   }
-  return user
+  return usuario
 }
 
-export async function requireDeliverer(event: H3Event): Promise<SessionData> {
-  const user = await requireAuth(event)
-  if (user.role !== 'deliverer') {
-    throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
+export async function exigirEntregador(event: H3Event): Promise<DadosSessao> {
+  const usuario = await exigirAutenticacao(event)
+  if (usuario.perfil !== 'entregador') {
+    throw createError({ statusCode: 403, statusMessage: 'Acesso negado' })
   }
-  return user
+  return usuario
 }
 
-export async function getUserById(id: number): Promise<User | undefined> {
-  const db = getDbClient()
-  const result = await db.execute({
-    sql: 'SELECT id, email, name, role, created_at FROM users WHERE id = ?',
+export async function obterUsuarioPorId(id: number): Promise<Usuario | undefined> {
+  const db = obterClienteDb()
+  const resultado = await db.executar({
+    sql: 'SELECT id, email, nome, perfil, criado_em FROM usuarios WHERE id = ?',
     args: [id]
   })
-  if (!result.rows.length) return undefined
-  return rowToUser(firstRow(result.rows))
+  if (!resultado.linhas.length) return undefined
+  return linhaParaUsuario(primeiraLinha(resultado.linhas))
 }
 
-export async function getDelivererByUserId(userId: number): Promise<Deliverer | undefined> {
-  const db = getDbClient()
-  const result = await db.execute({
-    sql: 'SELECT id, user_id, phone, vehicle_type, active FROM deliverers WHERE user_id = ?',
-    args: [userId]
+export async function obterEntregadorPorUsuarioId(usuarioId: number): Promise<Entregador | undefined> {
+  const db = obterClienteDb()
+  const resultado = await db.executar({
+    sql: 'SELECT id, usuario_id, telefone, tipo_veiculo, ativo FROM entregadores WHERE usuario_id = ?',
+    args: [usuarioId]
   })
-  if (!result.rows.length) return undefined
-  return rowToDeliverer(firstRow(result.rows))
+  if (!resultado.linhas.length) return undefined
+  return linhaParaEntregador(primeiraLinha(resultado.linhas))
 }

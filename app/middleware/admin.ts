@@ -3,17 +3,17 @@ export default defineNuxtRouteMiddleware(async () => {
     return
   }
 
-  const { user, fetchMe } = useAuth()
+  const { usuario, buscarMe } = useAutenticacao()
 
-  if (user.value === undefined) {
-    await fetchMe()
+  if (usuario.value === undefined) {
+    await buscarMe()
   }
 
-  if (!user.value) {
+  if (!usuario.value) {
     return navigateTo('/login')
   }
 
-  if (user.value.role !== 'admin') {
+  if (usuario.value.perfil !== 'admin') {
     return navigateTo('/entregador')
   }
 })
